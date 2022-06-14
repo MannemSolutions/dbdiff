@@ -23,6 +23,11 @@ pub struct Params {
     #[structopt(long = "dest_query")]
     #[structopt(default_value, long)]
     pub dest_query: String,
+
+    /// Max number of rows to not match
+    #[structopt(long = "max_unmatched")]
+    #[structopt(default_value, long)]
+    pub max_unmatched: u32,
 }
 
 fn get_str_default(val: &str, env_key: &str, default: &str) -> String {
@@ -35,18 +40,18 @@ fn get_str_default(val: &str, env_key: &str, default: &str) -> String {
     }
 }
 
-// fn get_int_default(val: u32, env_key: String, default: u32) -> u32 {
-//     if val > 0 {
-//         return val;
-//     }
-//     if let Ok(env_val) = env::var(env_key) {
-//         if let Ok(env_int_val) = env_val.parse::<u32>() {
-//             return env_int_val;
-//         }
-//     }
-//     default
-// }
-//
+fn get_int_default(val: u32, env_key: &str, default: u32) -> u32 {
+    if val > 0 {
+        return val;
+    }
+    if let Ok(env_val) = env::var(env_key) {
+        if let Ok(env_int_val) = env_val.parse::<u32>() {
+            return env_int_val;
+        }
+    }
+    default
+}
+
 // fn get_bool_default(val: bool, env_key: String) -> bool {
 //     if val {
 //         return val;
@@ -66,8 +71,9 @@ impl Params {
     }
     pub fn get_args() -> Params {
         let mut args = Params::from_args();
-        args.source_query = get_str_default(&args.source_query, &String::from("DBDIFF_SOURCE_QUERY"), &String::from("select * from pg_tables"),);
-        args.dest_query = get_str_default(&args.dest_query, &String::from("DBDIFF_DESTINATION_QUERY"), &args.source_query,);
+        args.max_unmatched = get_int_default(args.max_unmatched, &String::from("DBDIFF_MAX_UNMATCHED"), 1048576);
+        args.source_query = get_str_default(&args.source_query, &String::from("DBDIFF_SOURCE_QUERY"), &String::from("select * from pg_tables"));
+        args.dest_query = get_str_default(&args.dest_query, &String::from("DBDIFF_DESTINATION_QUERY"), &args.source_query);
         args.source_dsn = get_str_default(
             &args.source_dsn,
             &String::from("DBDIFF_SOURCE"),
