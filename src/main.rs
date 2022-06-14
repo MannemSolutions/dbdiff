@@ -8,6 +8,8 @@ use bit_vec::BitVec;
 use chrono::Utc;
 use cidr;
 
+mod cli;
+
 fn float_hasher(of: Option<f64>, mut s: DefaultHasher) -> DefaultHasher {
     match of {
         Some(f) => {
@@ -69,7 +71,7 @@ fn json_hasher(sj: Option<serde_json::Value>, mut s: DefaultHasher) -> DefaultHa
     s
 }
 
-fn row_hasher(row: &Row) -> u64 {
+fn row_hasher(row: &Row, display: bool) -> u64 {
     let mut s = DefaultHasher::new();
 
     let cols = row.columns();
@@ -187,12 +189,16 @@ fn row_hasher(row: &Row) -> u64 {
                 for d in row.get::<usize, Vec<Option<chrono::NaiveTime>>>(i) {
                     d.hash(&mut s)
                 }
-            Type::VARCHAR | Type::BYTEA => row.get::<usize, Option<String>>(i).hash(&mut s),
-            Type::VARCHAR_ARRAY | Type::BYTEA_ARRAY =>
+            Type::VARCHAR | Type::BYTEA | Type::NAME | Type::TEXT => row.get::<usize, Option<String>>(i).hash(&mut s),
+            Type::VARCHAR_ARRAY | Type::BYTEA_ARRAY | Type::NAME_ARRAY | Type::TEXT_ARRAY =>
                 for v in row.get::<usize, Vec<Option<String>>>(i) {
                     v.hash(&mut s)
                 }
-            _ => println!("missing type conversion for {}", cols[i].type_())
+            _ => {
+                if display {
+                    println!("missing type conversion for {}, use {}::TEXT if you want to take it into account", cols[i].type_(), cols[i].name());
+                }
+            }
         }
     }
     s.finish()
@@ -200,9 +206,10 @@ fn row_hasher(row: &Row) -> u64 {
 
 #[tokio::main] // By default, tokio_postgres uses the tokio crate as its runtime.
 async fn main() -> Result<(), Error> {
+    let args = cli::Params::get_args();
     // Connect to the database.
     let (client, connection) =
-        tokio_postgres::connect("host=localhost user=postgres port=49304 password=supassword", NoTls).await?;
+        tokio_postgres::connect(&*args.source_dsn, NoTls).await?;
 
     // The connection object performs the actual communication with the database,
     // so spawn it off to run on its own.
@@ -214,12 +221,13 @@ async fn main() -> Result<(), Error> {
 
     // Now we can execute a simple statement that just returns its parameter.
     let rows = client
-        .query("SELECT * from t4 order by 1, 2, 3, 4", &[])
+        .query(&args.source_query, &[])
         .await?;
-
     // And then check that we got back the same string we sent over.
+    let mut first: bool = true;
     for row in &rows {
-        let h = row_hasher(row);
+        let h = row_hasher(row, first);
+        first = false;
         println!("Checksum: {}", h);
     }
 
