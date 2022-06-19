@@ -26,7 +26,7 @@ async fn next_hash(mut rows: Pin<&mut RowStream>, first: bool) -> Result<(Row, u
 
 
 #[tokio::main] // By default, tokio_postgres uses the tokio crate as its runtime.
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() -> Result<()> {
     let args = cli::Params::get_args();
     // Connect to the database.
     let (source, source_connection) =
@@ -59,14 +59,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // And run the query on the dest connection
     let dest_rows = dest
-        .query_raw(&args.source_query, params).await?;
+        .query_raw(&args.dest_query, params).await?;
 
     // And then check that we got back the same string we sent over.
 
     pin_mut!(source_rows);
-    let source_done: bool = false;
+    let mut source_done: bool = false;
     pin_mut!(dest_rows);
-    let dest_done: bool = false;
+    let mut dest_done: bool = false;
     let mut i: u32 = 0;
     let mut _of: bool = false;
     let mut source_distinct_rows: HashMap<u64, Row> = HashMap::new();
@@ -82,12 +82,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 // Add one, don't care about overflow
                 (i, _of) = i.overflowing_add(1);
             } else {
-                let (r, h) = next_hash(source_rows.as_mut(), false).await?;
-                if dest_distinct_rows.contains_key(&h) {
-                    dest_distinct_rows.remove(&h);
-                    (i, _of) = i.overflowing_add(1);
-                } else {
-                    source_distinct_rows.insert(h, r);
+                match next_hash(source_rows.as_mut(), false).await {
+                    Ok((r, h)) => {
+                        if dest_distinct_rows.contains_key(&h) {
+                            dest_distinct_rows.remove(&h);
+                        } else {
+                            source_distinct_rows.insert(h, r);
+                            (i, _of) = i.overflowing_add(1);
+                        }
+                    }
+                    Err(e) => if e.to_string() == "We reached the end of the RowStream" {
+                        source_done = true
+                    } else {
+                        return Err(e)
+                    }
                 }
             }
 
@@ -96,18 +104,30 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 // Add one, don't care about overflow
                 (i, _of) = i.overflowing_add(1);
             } else {
-                let (r, h) = next_hash(dest_rows.as_mut(), false).await?;
-                if source_distinct_rows.contains_key(&h) {
-                    source_distinct_rows.remove(&h);
-                    (i, _of) = i.overflowing_add(1);
-                } else {
-                    dest_distinct_rows.insert(h, r);
+                match next_hash(dest_rows.as_mut(), false).await{
+                    Ok((r, h)) => {
+                        if source_distinct_rows.contains_key(&h) {
+                            source_distinct_rows.remove(&h);
+                        } else {
+                            dest_distinct_rows.insert(h, r);
+                            (i, _of) = i.overflowing_add(1);
+                        }
+                    }
+                    Err(e) => if e.to_string() == "We reached the end of the RowStream" {
+                        dest_done = true
+                    } else {
+                        return Err(e)
+                    }
                 }
             }
         }
     }
+    println!("i: {}", i);
     for (h, r) in source_distinct_rows {
-        println!("Checksums: {} {}", h, pg_hasher::row_as_string(r.borrow(), false));
+        println!("< Checksums: {} {}", h, pg_hasher::row_as_string(r.borrow(), false));
+    }
+    for (h, r) in dest_distinct_rows {
+        println!("> Checksums: {} {}", h, pg_hasher::row_as_string(r.borrow(), false));
     }
 
     Ok(())
