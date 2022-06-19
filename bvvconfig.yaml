@@ -1,0 +1,87 @@
+api:
+  key: 72504b2ff431e5691dcb744c683a4ea55c63feabe885a3ac3c3e78243b6ec194
+  secret: 8f8d2ee764b9fcd3de98eb0012c4ad7b5a018eea2e2963a44c9369763925a9683eebe007d2dea2a86fefa165f18a931285769992fe0b7c7824486e9368f3e3ce
+  debug: false
+fiat: EUR
+activeMode: true
+debug: false
+buy_underwater: false
+markets:
+  BTC:
+    buy_underwater: true
+    min: 95
+    rateWindow: 20
+    ema:
+      interval: '1d'
+      window: 200
+      limit: 400
+  ETH:
+    buy_underwater: true
+    min: 95
+    rateWindow: 20
+    ema:
+      interval: '1d'
+      window: 200
+      limit: 400
+  ADA:
+    ema:
+      interval: '1d'
+      window: 200
+      limit: 400
+  DOT:
+    ema:
+      interval: '1d'
+      window: 200
+      limit: 400
+  FTM:
+    max: 55
+    rateWindow: 20
+    ema:
+      interval: '1d'
+      window: 200
+      limit: 400
+  LINK:
+    min: 45
+    max: 55
+    rateWindow: 20
+    ema:
+      interval: '1d'
+      window: 200
+      limit: 400
+  NAS:
+    min: 45
+    max: 55
+    rateWindow: 8
+    ema:
+      interval: '1d'
+      window: 200
+      limit: 400
+  NEO:
+    max: 55
+    rateWindow: 20
+    ema:
+      interval: '1d'
+      window: 200
+      limit: 400
+  SOL:
+    max: 55
+    rateWindow: 10
+    ema:
+      interval: '1d'
+      window: 200
+      limit: 400
+  VET:
+    max: 55
+    rateWindow: 20
+    ema:
+      interval: '1d'
+      window: 200
+      limit: 400
+  ZRX:
+    min: 45
+    max: 55
+    rateWindow: 20
+    ema:
+      interval: '1d'
+      window: 200
+      limit: 400

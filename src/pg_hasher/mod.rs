@@ -370,3 +370,12 @@ pub fn row_map(row: &Row, display: bool) -> HashMap<String, String> {
     }
     row_map
 }
+pub fn row_as_string(row: &Row, display: bool) -> String {
+    let mut col_vals: Vec<String> = Vec::new();
+    let cols = row.columns();
+    for i in 0..cols.len() {
+        let col_val = format!("{}: {}", cols[i].name(), col_as_sql_str(row, i, display));
+        col_vals.push(col_val);
+    }
+    format!("[ {} ]", col_vals.join(", "))
+}

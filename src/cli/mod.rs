@@ -27,7 +27,7 @@ pub struct Params {
     /// Max number of rows to not match
     #[structopt(long = "max_unmatched")]
     #[structopt(default_value, long)]
-    pub max_unmatched: u32,
+    pub max_unmatched: usize,
 }
 
 fn get_str_default(val: &str, env_key: &str, default: &str) -> String {
@@ -71,7 +71,7 @@ impl Params {
     }
     pub fn get_args() -> Params {
         let mut args = Params::from_args();
-        args.max_unmatched = get_int_default(args.max_unmatched, &String::from("DBDIFF_MAX_UNMATCHED"), 1048576);
+        args.max_unmatched = get_int_default(args.max_unmatched as u32, &String::from("DBDIFF_MAX_UNMATCHED"), 1048576) as usize;
         args.source_query = get_str_default(&args.source_query, &String::from("DBDIFF_SOURCE_QUERY"), &String::from("select * from pg_tables"));
         args.dest_query = get_str_default(&args.dest_query, &String::from("DBDIFF_DESTINATION_QUERY"), &args.source_query);
         args.source_dsn = get_str_default(
@@ -82,7 +82,7 @@ impl Params {
         args.dest_dsn = get_str_default(
             &args.dest_dsn,
             &String::from("DBDIFF_DESTINATION"),
-            &String::from("host=/tmp"),
+            &args.source_dsn[..],
         );
         args
     }
