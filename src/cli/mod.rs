@@ -14,6 +14,21 @@ pub struct Params {
     #[structopt(default_value, long)]
     pub dest_dsn: String,
 
+    /// Table name for insert queries into the source
+    #[structopt(short = "t", long = "sourcetable")]
+    #[structopt(default_value, long)]
+    pub source_table_name: String,
+
+    /// Table name for insert queries into the dest
+    #[structopt(long = "desttable")]
+    #[structopt(default_value, long)]
+    pub dest_table_name: String,
+
+    /// Output format
+    #[structopt(short = "f", long = "format")]
+    #[structopt(default_value, long)]
+    pub output_format: String,
+
     /// Query to run on the source database
     #[structopt(short = "q", long = "source_query")]
     #[structopt(default_value, long)]
@@ -72,6 +87,9 @@ impl Params {
     pub fn get_args() -> Params {
         let mut args = Params::from_args();
         args.max_unmatched = get_int_default(args.max_unmatched as u32, &String::from("DBDIFF_MAX_UNMATCHED"), 1048576) as usize;
+        args.output_format = get_str_default(&args.output_format, &String::from("DBDIFF_OUTPUT_FORMAT"), &String::from("hashmap"));
+        args.source_table_name = get_str_default(&args.source_table_name, &String::from("DBDIFF_SOURCE_TABLE_NAME"), &String::from("t1"));
+        args.dest_table_name = get_str_default(&args.dest_table_name, &String::from("DBDIFF_DESTINATION_TABLE_NAME"), &args.source_table_name);
         args.source_query = get_str_default(&args.source_query, &String::from("DBDIFF_SOURCE_QUERY"), &String::from("select * from pg_tables"));
         args.dest_query = get_str_default(&args.dest_query, &String::from("DBDIFF_DESTINATION_QUERY"), &args.source_query);
         args.source_dsn = get_str_default(

@@ -9,6 +9,10 @@ use std::collections::HashMap;
 
 pub const NULL: &'static str = "Null";
 
+fn str_as_name(name: &str) -> String {
+    format!("\"{}\"", name.replace("'", "''"))
+}
+
 fn varchar_as_sql_str(os: Option<String>) -> String {
     match os {
         Some(s) => format!("'{}'", s.replace("'", "''")),
@@ -378,4 +382,15 @@ pub fn row_as_string(row: &Row, display: bool) -> String {
         col_vals.push(col_val);
     }
     format!("[ {} ]", col_vals.join(", "))
+}
+pub fn row_as_insert(table_name: &str, row: &Row, display: bool) -> String {
+    let mut col_names: Vec<String> = Vec::new();
+    let mut col_vals: Vec<String> = Vec::new();
+    let cols = row.columns();
+    for i in 0..cols.len() {
+        col_names.push(str_as_name(cols[i].name()));
+        col_vals.push(col_as_sql_str(row, i, display));
+    }
+    format!("insert into {} ({}) VALUES({});", str_as_name(table_name),
+            col_names.join(", "), col_vals.join(", "))
 }

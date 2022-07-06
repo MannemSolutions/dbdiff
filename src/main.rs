@@ -122,12 +122,27 @@ async fn main() -> Result<()> {
             }
         }
     }
-    println!("i: {}", i);
-    for (h, r) in source_distinct_rows {
-        println!("< Checksums: {} {}", h, pg_hasher::row_as_string(r.borrow(), false));
-    }
-    for (h, r) in dest_distinct_rows {
-        println!("> Checksums: {} {}", h, pg_hasher::row_as_string(r.borrow(), false));
+    println!("Processed: {}", i+1);
+    match args.output_format.as_str() {
+        "hashmap" => {
+            for (_h, r) in source_distinct_rows {
+                println!("< {}", pg_hasher::row_as_string(r.borrow(), false));
+            }
+            for (_h, r) in dest_distinct_rows {
+                println!("> {}", pg_hasher::row_as_string(r.borrow(), false));
+            }
+        },
+        "insert" => {
+            for (_h, r) in source_distinct_rows {
+                println!("< {}", pg_hasher::row_as_insert(args.dest_table_name.as_str(), r.borrow(), false));
+            }
+            for (_h, r) in dest_distinct_rows {
+                println!("> {}", pg_hasher::row_as_insert(args.source_table_name.as_str(), r.borrow(), false));
+            }
+        },
+        _ => {
+            return Err(anyhow::anyhow!("Invalid output format {}", args.output_format));
+        }
     }
 
     Ok(())
