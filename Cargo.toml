@@ -19,3 +19,5 @@ tokio-postgres = { version = "0.7.6", features = ["with-chrono-0_4", "with-bit-v
 postgres-types = { version = "0.2.3",  features = ["with-cidr-0_2"] }
 uuid = "1.1.2"
 structopt = "0.3.26"
+futures = "0.3.21"
+anyhow = "1.0"
