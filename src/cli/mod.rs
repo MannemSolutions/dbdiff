@@ -1,5 +1,5 @@
-use structopt::StructOpt;
 use crate::generic;
+use structopt::StructOpt;
 
 /// Search for a pattern in a file and display the lines that contain it.
 #[derive(StructOpt)]
@@ -51,12 +51,36 @@ impl Params {
     }
     pub fn get_args() -> Params {
         let mut args = Params::from_args();
-        args.max_unmatched = generic::get_env_int(args.max_unmatched as u32, &String::from("DBDIFF_MAX_UNMATCHED"), 1048576) as usize;
-        args.output_format = generic::get_env_str(&args.output_format, &String::from("DBDIFF_OUTPUT_FORMAT"), &String::from("hashmap"));
-        args.source_table_name = generic::get_env_str(&args.source_table_name, &String::from("DBDIFF_SOURCE_TABLE_NAME"), &String::from("t1"));
-        args.dest_table_name = generic::get_env_str(&args.dest_table_name, &String::from("DBDIFF_DESTINATION_TABLE_NAME"), &args.source_table_name);
-        args.source_query = generic::get_env_str(&args.source_query, &String::from("DBDIFF_SOURCE_QUERY"), &String::from("select * from pg_tables"));
-        args.dest_query = generic::get_env_str(&args.dest_query, &String::from("DBDIFF_DESTINATION_QUERY"), &args.source_query);
+        args.max_unmatched = generic::get_env_int(
+            args.max_unmatched as u32,
+            &String::from("DBDIFF_MAX_UNMATCHED"),
+            1048576,
+        ) as usize;
+        args.output_format = generic::get_env_str(
+            &args.output_format,
+            &String::from("DBDIFF_OUTPUT_FORMAT"),
+            &String::from("hashmap"),
+        );
+        args.source_table_name = generic::get_env_str(
+            &args.source_table_name,
+            &String::from("DBDIFF_SOURCE_TABLE_NAME"),
+            &String::from("t1"),
+        );
+        args.dest_table_name = generic::get_env_str(
+            &args.dest_table_name,
+            &String::from("DBDIFF_DESTINATION_TABLE_NAME"),
+            &args.source_table_name,
+        );
+        args.source_query = generic::get_env_str(
+            &args.source_query,
+            &String::from("DBDIFF_SOURCE_QUERY"),
+            &String::from("select * from pg_tables"),
+        );
+        args.dest_query = generic::get_env_str(
+            &args.dest_query,
+            &String::from("DBDIFF_DESTINATION_QUERY"),
+            &args.source_query,
+        );
         args.source_dsn = generic::get_env_str(
             &args.source_dsn,
             &String::from("DBDIFF_SOURCE"),

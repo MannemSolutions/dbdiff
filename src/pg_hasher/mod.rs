@@ -1,10 +1,10 @@
-use std::collections::hash_map::DefaultHasher;
-use std::hash::{Hash, Hasher};
-use chrono;
-use tokio_postgres::{Row, types::Type};
 use bit_vec::BitVec;
+use chrono;
 use chrono::Utc;
 use cidr;
+use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash, Hasher};
+use tokio_postgres::{types::Type, Row};
 // use std::collections::HashMap;
 
 pub const NULL: &'static str = "Null";
@@ -22,9 +22,7 @@ fn varchar_as_sql_str(os: Option<String>) -> String {
 
 fn float_as_sql_str(of: Option<f64>) -> String {
     match of {
-        Some(f) => {
-            f.to_string()
-        }
+        Some(f) => f.to_string(),
         None => String::from(NULL),
     }
 }
@@ -41,7 +39,7 @@ fn rect_as_sql_str(rect: Option<geo_types::Rect<f64>>) -> String {
         Some(r) => {
             let c = r.center();
             format!("{} {} {} {}", c.x, c.y, r.height(), r.width())
-        },
+        }
         None => String::from(NULL),
     }
 }
@@ -54,7 +52,7 @@ fn linestring_as_sql_str(ls: Option<geo_types::LineString<f64>>) -> String {
                 vec.push(format!("{} {}", c.x, c.y))
             }
             vec.join(" ")
-        },
+        }
         None => String::from(NULL),
     }
 }
@@ -70,113 +68,104 @@ fn col_as_sql_str(row: &Row, i: usize, display: bool) -> String {
     let mut val_array: Vec<String>;
     let col = &row.columns()[i];
     match *col.type_() {
-        Type::BIT => {
-            match row.get::<usize, Option<BitVec>>(i) {
-                Some(b) => b.any().to_string(),
-                None => String::from(NULL),
-            }
+        Type::BIT => match row.get::<usize, Option<BitVec>>(i) {
+            Some(b) => b.any().to_string(),
+            None => String::from(NULL),
         },
         Type::BIT_ARRAY => {
             val_array = Vec::new();
             for ob in row.get::<usize, Vec<Option<BitVec>>>(i) {
                 match ob {
                     Some(b) => val_array.push(b.any().to_string()),
-                    None => val_array.push(String::from(NULL))
+                    None => val_array.push(String::from(NULL)),
                 }
             }
             format!("[ {} ]", val_array.join(", "))
-        },
-        Type::BOOL => {
-            match row.get::<usize, Option<bool>>(i) {
-                Some(b) => b.to_string(),
-                None => String::from(NULL),
-            }
+        }
+        Type::BOOL => match row.get::<usize, Option<bool>>(i) {
+            Some(b) => b.to_string(),
+            None => String::from(NULL),
         },
         Type::BOOL_ARRAY => {
             val_array = Vec::new();
             for ob in row.get::<usize, Vec<Option<bool>>>(i) {
                 match ob {
                     Some(b) => val_array.push(b.to_string()),
-                    None => val_array.push(String::from(NULL))
+                    None => val_array.push(String::from(NULL)),
                 }
             }
             format!("[ {} ]", val_array.join(", "))
+        }
+        Type::CHAR => match row.get::<usize, Option<i8>>(i) {
+            Some(i) => i.to_string(),
+            None => String::from(NULL),
         },
-        Type::CHAR =>
-            match row.get::<usize, Option<i8>>(i) {
-                Some(i) => i.to_string(),
-                None => String::from(NULL),
-            }
         Type::CHAR_ARRAY => {
             val_array = Vec::new();
             for oi in row.get::<usize, Vec<Option<i8>>>(i) {
                 match oi {
                     Some(i) => val_array.push(i.to_string()),
-                    None => val_array.push(String::from(NULL))
+                    None => val_array.push(String::from(NULL)),
                 }
             }
             format!("[ {} ]", val_array.join(", "))
+        }
+        Type::INT2 => match row.get::<usize, Option<i16>>(i) {
+            Some(i) => i.to_string(),
+            None => String::from(NULL),
         },
-        Type::INT2 =>
-            match row.get::<usize, Option<i16>>(i) {
-                Some(i) => i.to_string(),
-                None => String::from(NULL),
-            }
         Type::INT2_ARRAY => {
             val_array = Vec::new();
             for oi in row.get::<usize, Vec<Option<i16>>>(i) {
                 match oi {
                     Some(i) => val_array.push(i.to_string()),
-                    None => val_array.push(String::from(NULL))
+                    None => val_array.push(String::from(NULL)),
                 }
             }
             format!("[ {} ]", val_array.join(", "))
+        }
+        Type::INT4 => match row.get::<usize, Option<i32>>(i) {
+            Some(i) => i.to_string(),
+            None => String::from(NULL),
         },
-        Type::INT4 =>
-            match row.get::<usize, Option<i32>>(i) {
-                Some(i) => i.to_string(),
-                None => String::from(NULL),
-            }
         Type::INT4_ARRAY => {
             val_array = Vec::new();
             for oi in row.get::<usize, Vec<Option<i32>>>(i) {
                 match oi {
                     Some(i) => val_array.push(i.to_string()),
-                    None => val_array.push(String::from(NULL))
+                    None => val_array.push(String::from(NULL)),
                 }
             }
             format!("[ {} ]", val_array.join(", "))
+        }
+        Type::INT8 => match row.get::<usize, Option<i64>>(i) {
+            Some(i) => i.to_string(),
+            None => String::from(NULL),
         },
-        Type::INT8 =>
-            match row.get::<usize, Option<i64>>(i) {
-                Some(i) => i.to_string(),
-                None => String::from(NULL),
-            }
         Type::INT8_ARRAY => {
             val_array = Vec::new();
             for oi in row.get::<usize, Vec<Option<i64>>>(i) {
                 match oi {
                     Some(i) => val_array.push(i.to_string()),
-                    None => val_array.push(String::from(NULL))
+                    None => val_array.push(String::from(NULL)),
                 }
             }
             format!("[ {} ]", val_array.join(", "))
+        }
+        Type::OID => match row.get::<usize, Option<u32>>(i) {
+            Some(i) => i.to_string(),
+            None => String::from(NULL),
         },
-        Type::OID =>
-            match row.get::<usize, Option<u32>>(i) {
-                Some(i) => i.to_string(),
-                None => String::from(NULL),
-            }
         Type::OID_ARRAY => {
             val_array = Vec::new();
             for oi in row.get::<usize, Vec<Option<u32>>>(i) {
                 match oi {
                     Some(i) => val_array.push(i.to_string()),
-                    None => val_array.push(String::from(NULL))
+                    None => val_array.push(String::from(NULL)),
                 }
             }
             format!("[ {} ]", val_array.join(", "))
-        },
+        }
         Type::FLOAT4 | Type::FLOAT8 => float_as_sql_str(row.get::<usize, Option<f64>>(i)),
         Type::FLOAT4_ARRAY | Type::FLOAT8_ARRAY => {
             val_array = Vec::new();
@@ -184,12 +173,11 @@ fn col_as_sql_str(row: &Row, i: usize, display: bool) -> String {
                 val_array.push(float_as_sql_str(f));
             }
             format!("[ {} ]", val_array.join(", "))
+        }
+        Type::CIDR => match row.get::<usize, Option<cidr::IpCidr>>(i) {
+            Some(ic) => ic.to_string(),
+            None => String::from(NULL),
         },
-        Type::CIDR =>
-            match row.get::<usize, Option<cidr::IpCidr>>(i) {
-                Some(ic) => ic.to_string(),
-                None => String::from(NULL),
-            }
         Type::CIDR_ARRAY => {
             val_array = Vec::new();
             for c in row.get::<usize, Vec<Option<cidr::IpCidr>>>(i) {
@@ -199,12 +187,11 @@ fn col_as_sql_str(row: &Row, i: usize, display: bool) -> String {
                 }
             }
             format!("[ {} ]", val_array.join(", "))
+        }
+        Type::INET => match row.get::<usize, Option<cidr::IpInet>>(i) {
+            Some(inet) => inet.to_string(),
+            None => String::from(NULL),
         },
-        Type::INET =>
-            match row.get::<usize, Option<cidr::IpInet>>(i) {
-                Some(inet) => inet.to_string(),
-                None => String::from(NULL),
-            }
         Type::INET_ARRAY => {
             val_array = Vec::new();
             for oinet in row.get::<usize, Vec<Option<cidr::IpInet>>>(i) {
@@ -214,12 +201,11 @@ fn col_as_sql_str(row: &Row, i: usize, display: bool) -> String {
                 }
             }
             format!("[ {} ]", val_array.join(", "))
+        }
+        Type::MACADDR | Type::MACADDR8 => match row.get::<usize, Option<eui48::MacAddress>>(i) {
+            Some(mac) => mac.to_string(eui48::MacAddressFormat::HexString),
+            None => String::from(NULL),
         },
-        Type::MACADDR | Type::MACADDR8 =>
-            match row.get::<usize, Option<eui48::MacAddress>>(i) {
-                Some(mac) => mac.to_string(eui48::MacAddressFormat::HexString),
-                None => String::from(NULL),
-            }
         Type::MACADDR_ARRAY | Type::MACADDR8_ARRAY => {
             val_array = Vec::new();
             for m in row.get::<usize, Vec<Option<eui48::MacAddress>>>(i) {
@@ -229,7 +215,7 @@ fn col_as_sql_str(row: &Row, i: usize, display: bool) -> String {
                 }
             }
             format!("[ {} ]", val_array.join(", "))
-        },
+        }
         Type::POINT => point_as_sql_str(row.get::<usize, Option<geo_types::Point<f64>>>(i)),
         Type::POINT_ARRAY => {
             val_array = Vec::new();
@@ -237,7 +223,7 @@ fn col_as_sql_str(row: &Row, i: usize, display: bool) -> String {
                 val_array.push(point_as_sql_str(p))
             }
             format!("[ {} ]", val_array.join(", "))
-        },
+        }
         Type::BOX => rect_as_sql_str(row.get::<usize, Option<geo_types::Rect<f64>>>(i)),
         Type::BOX_ARRAY => {
             val_array = Vec::new();
@@ -245,15 +231,17 @@ fn col_as_sql_str(row: &Row, i: usize, display: bool) -> String {
                 val_array.push(rect_as_sql_str(ob));
             }
             format!("[ {} ]", val_array.join(", "))
-        },
-        Type::PATH => linestring_as_sql_str(row.get::<usize, Option<geo_types::LineString<f64>>>(i)),
+        }
+        Type::PATH => {
+            linestring_as_sql_str(row.get::<usize, Option<geo_types::LineString<f64>>>(i))
+        }
         Type::PATH_ARRAY => {
             val_array = Vec::new();
             for ls in row.get::<usize, Vec<Option<geo_types::LineString<f64>>>>(i) {
                 val_array.push(linestring_as_sql_str(ls));
             }
             format!("[ {} ]", val_array.join(", "))
-        },
+        }
         Type::JSON | Type::JSONB => json_as_sql_str(row.get::<usize, Option<serde_json::Value>>(i)),
         Type::JSON_ARRAY | Type::JSONB_ARRAY => {
             val_array = Vec::new();
@@ -263,11 +251,10 @@ fn col_as_sql_str(row: &Row, i: usize, display: bool) -> String {
             format!("[ {} ]", val_array.join(", "))
         }
 
-        Type::UUID =>
-            match row.get::<usize, Option<uuid::Uuid>>(i) {
-                Some(mac) => mac.to_string(),
-                None => String::from(NULL),
-            }
+        Type::UUID => match row.get::<usize, Option<uuid::Uuid>>(i) {
+            Some(mac) => mac.to_string(),
+            None => String::from(NULL),
+        },
         Type::UUID_ARRAY => {
             val_array = Vec::new();
             for ou in row.get::<usize, Vec<Option<uuid::Uuid>>>(i) {
@@ -278,11 +265,10 @@ fn col_as_sql_str(row: &Row, i: usize, display: bool) -> String {
             }
             format!("[ {} ]", val_array.join(", "))
         }
-        Type::TIMESTAMP =>
-            match row.get::<usize, Option<chrono::NaiveDateTime>>(i) {
-                Some(dt) => dt.to_string(),
-                None => String::from(NULL),
-            }
+        Type::TIMESTAMP => match row.get::<usize, Option<chrono::NaiveDateTime>>(i) {
+            Some(dt) => dt.to_string(),
+            None => String::from(NULL),
+        },
         Type::TIMESTAMP_ARRAY => {
             val_array = Vec::new();
             for odt in row.get::<usize, Vec<Option<chrono::NaiveDateTime>>>(i) {
@@ -292,12 +278,11 @@ fn col_as_sql_str(row: &Row, i: usize, display: bool) -> String {
                 }
             }
             format!("[ {} ]", val_array.join(", "))
+        }
+        Type::TIMESTAMPTZ => match row.get::<usize, Option<chrono::DateTime<Utc>>>(i) {
+            Some(dt) => dt.to_string(),
+            None => String::from(NULL),
         },
-        Type::TIMESTAMPTZ =>
-            match row.get::<usize, Option<chrono::DateTime<Utc>>>(i) {
-                Some(dt) => dt.to_string(),
-                None => String::from(NULL),
-            }
         Type::TIMESTAMPTZ_ARRAY => {
             val_array = Vec::new();
             for t in row.get::<usize, Vec<Option<chrono::DateTime<Utc>>>>(i) {
@@ -307,12 +292,11 @@ fn col_as_sql_str(row: &Row, i: usize, display: bool) -> String {
                 }
             }
             format!("[ {} ]", val_array.join(", "))
+        }
+        Type::DATE => match row.get::<usize, Option<chrono::NaiveDate>>(i) {
+            Some(dt) => dt.to_string(),
+            None => String::from(NULL),
         },
-        Type::DATE =>
-            match row.get::<usize, Option<chrono::NaiveDate>>(i) {
-                Some(dt) => dt.to_string(),
-                None => String::from(NULL),
-            }
         Type::DATE_ARRAY => {
             val_array = Vec::new();
             for d in row.get::<usize, Vec<Option<chrono::NaiveDate>>>(i) {
@@ -322,12 +306,11 @@ fn col_as_sql_str(row: &Row, i: usize, display: bool) -> String {
                 }
             }
             format!("[ {} ]", val_array.join(", "))
+        }
+        Type::TIME => match row.get::<usize, Option<chrono::NaiveTime>>(i) {
+            Some(dt) => dt.to_string(),
+            None => String::from(NULL),
         },
-        Type::TIME =>
-            match row.get::<usize, Option<chrono::NaiveTime>>(i) {
-                Some(dt) => dt.to_string(),
-                None => String::from(NULL),
-            }
         Type::TIME_ARRAY => {
             val_array = Vec::new();
             for d in row.get::<usize, Vec<Option<chrono::NaiveTime>>>(i) {
@@ -337,9 +320,10 @@ fn col_as_sql_str(row: &Row, i: usize, display: bool) -> String {
                 }
             }
             format!("[ {} ]", val_array.join(", "))
-
-        },
-        Type::VARCHAR | Type::BYTEA | Type::NAME | Type::TEXT => varchar_as_sql_str(row.get::<usize, Option<String>>(i)),
+        }
+        Type::VARCHAR | Type::BYTEA | Type::NAME | Type::TEXT => {
+            varchar_as_sql_str(row.get::<usize, Option<String>>(i))
+        }
         Type::VARCHAR_ARRAY | Type::BYTEA_ARRAY | Type::NAME_ARRAY | Type::TEXT_ARRAY => {
             val_array = Vec::new();
             for os in row.get::<usize, Vec<Option<String>>>(i) {
@@ -362,7 +346,7 @@ pub fn row_hasher(row: &Row, display: bool) -> u64 {
     let cols = row.columns();
     for i in 0..cols.len() {
         col_as_sql_str(row, i, display).hash(&mut s);
-        }
+    }
     s.finish()
 }
 
@@ -391,6 +375,10 @@ pub fn row_as_insert(table_name: &str, row: &Row, display: bool) -> String {
         col_names.push(str_as_name(cols[i].name()));
         col_vals.push(col_as_sql_str(row, i, display));
     }
-    format!("insert into {} ({}) VALUES({});", str_as_name(table_name),
-            col_names.join(", "), col_vals.join(", "))
+    format!(
+        "insert into {} ({}) VALUES({});",
+        str_as_name(table_name),
+        col_names.join(", "),
+        col_vals.join(", ")
+    )
 }

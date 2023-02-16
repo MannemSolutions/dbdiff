@@ -34,4 +34,3 @@ pub fn get_env_int(val: u32, env_key: &str, default: u32) -> u32 {
 //     }
 //     false
 // }
-
