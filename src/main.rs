@@ -8,6 +8,8 @@ use std::collections::HashMap;
 
 mod cli;
 mod pg_hasher;
+mod generic;
+mod dsn;
 
 async fn next_hash(mut rows: Pin<&mut RowStream>, first: bool) -> Result<(Row, u64)> {
     match rows.try_next().await {
@@ -29,8 +31,12 @@ async fn next_hash(mut rows: Pin<&mut RowStream>, first: bool) -> Result<(Row, u
 async fn main() -> Result<()> {
     let args = cli::Params::get_args();
     // Connect to the database.
+    let source_dsn = dsn::Dsn::from_string(args.source_dsn.as_str())
+        .merge(dsn::Dsn::from_defaults())
+        .as_string();
+    println!("source dsn: {0}", source_dsn);
     let (source, source_connection) =
-        tokio_postgres::connect(&*args.source_dsn, NoTls).await?;
+        tokio_postgres::connect(&*source_dsn, NoTls).await?;
 
     // The source_connection object performs the actual communication with the database,
     // so spawn it off to run on its own.

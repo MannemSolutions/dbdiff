@@ -1,5 +1,5 @@
-use std::env;
 use structopt::StructOpt;
+use crate::generic;
 
 /// Search for a pattern in a file and display the lines that contain it.
 #[derive(StructOpt)]
@@ -45,59 +45,24 @@ pub struct Params {
     pub max_unmatched: usize,
 }
 
-fn get_str_default(val: &str, env_key: &str, default: &str) -> String {
-    if !val.is_empty() {
-        return format!("{}", val);
-    }
-    match env::var(env_key) {
-        Ok(env_val) => env_val,
-        Err(_e) => format!("{}", default),
-    }
-}
-
-fn get_int_default(val: u32, env_key: &str, default: u32) -> u32 {
-    if val > 0 {
-        return val;
-    }
-    if let Ok(env_val) = env::var(env_key) {
-        if let Ok(env_int_val) = env_val.parse::<u32>() {
-            return env_int_val;
-        }
-    }
-    default
-}
-
-// fn get_bool_default(val: bool, env_key: String) -> bool {
-//     if val {
-//         return val;
-//     }
-//     if let Ok(mut env_val) = env::var(env_key) {
-//         env_val.make_ascii_lowercase();
-//         if let Ok(env_bool_val) = env_val.parse::<bool>() {
-//             return env_bool_val;
-//         }
-//     }
-//     false
-// }
-
 impl Params {
     fn from_args() -> Params {
         <Params as StructOpt>::from_args()
     }
     pub fn get_args() -> Params {
         let mut args = Params::from_args();
-        args.max_unmatched = get_int_default(args.max_unmatched as u32, &String::from("DBDIFF_MAX_UNMATCHED"), 1048576) as usize;
-        args.output_format = get_str_default(&args.output_format, &String::from("DBDIFF_OUTPUT_FORMAT"), &String::from("hashmap"));
-        args.source_table_name = get_str_default(&args.source_table_name, &String::from("DBDIFF_SOURCE_TABLE_NAME"), &String::from("t1"));
-        args.dest_table_name = get_str_default(&args.dest_table_name, &String::from("DBDIFF_DESTINATION_TABLE_NAME"), &args.source_table_name);
-        args.source_query = get_str_default(&args.source_query, &String::from("DBDIFF_SOURCE_QUERY"), &String::from("select * from pg_tables"));
-        args.dest_query = get_str_default(&args.dest_query, &String::from("DBDIFF_DESTINATION_QUERY"), &args.source_query);
-        args.source_dsn = get_str_default(
+        args.max_unmatched = generic::get_env_int(args.max_unmatched as u32, &String::from("DBDIFF_MAX_UNMATCHED"), 1048576) as usize;
+        args.output_format = generic::get_env_str(&args.output_format, &String::from("DBDIFF_OUTPUT_FORMAT"), &String::from("hashmap"));
+        args.source_table_name = generic::get_env_str(&args.source_table_name, &String::from("DBDIFF_SOURCE_TABLE_NAME"), &String::from("t1"));
+        args.dest_table_name = generic::get_env_str(&args.dest_table_name, &String::from("DBDIFF_DESTINATION_TABLE_NAME"), &args.source_table_name);
+        args.source_query = generic::get_env_str(&args.source_query, &String::from("DBDIFF_SOURCE_QUERY"), &String::from("select * from pg_tables"));
+        args.dest_query = generic::get_env_str(&args.dest_query, &String::from("DBDIFF_DESTINATION_QUERY"), &args.source_query);
+        args.source_dsn = generic::get_env_str(
             &args.source_dsn,
             &String::from("DBDIFF_SOURCE"),
-            &String::from("host=/tmp"),
+            &String::from(""),
         );
-        args.dest_dsn = get_str_default(
+        args.dest_dsn = generic::get_env_str(
             &args.dest_dsn,
             &String::from("DBDIFF_DESTINATION"),
             &args.source_dsn[..],

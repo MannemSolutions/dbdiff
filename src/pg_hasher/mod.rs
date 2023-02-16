@@ -5,7 +5,7 @@ use tokio_postgres::{Row, types::Type};
 use bit_vec::BitVec;
 use chrono::Utc;
 use cidr;
-use std::collections::HashMap;
+// use std::collections::HashMap;
 
 pub const NULL: &'static str = "Null";
 
@@ -366,14 +366,14 @@ pub fn row_hasher(row: &Row, display: bool) -> u64 {
     s.finish()
 }
 
-pub fn row_map(row: &Row, display: bool) -> HashMap<String, String> {
-    let mut row_map: HashMap<String, String> = HashMap::new();
-    let cols = row.columns();
-    for i in 0..cols.len() {
-        row_map.insert(String::from(cols[i].name()), col_as_sql_str(row, i, display));
-    }
-    row_map
-}
+// pub fn row_map(row: &Row, display: bool) -> HashMap<String, String> {
+//     let mut row_map: HashMap<String, String> = HashMap::new();
+//     let cols = row.columns();
+//     for i in 0..cols.len() {
+//         row_map.insert(String::from(cols[i].name()), col_as_sql_str(row, i, display));
+//     }
+//     row_map
+// }
 pub fn row_as_string(row: &Row, display: bool) -> String {
     let mut col_vals: Vec<String> = Vec::new();
     let cols = row.columns();
