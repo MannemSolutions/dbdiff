@@ -4,7 +4,7 @@ use futures;
 use futures::{pin_mut, TryStreamExt};
 use std::borrow::Borrow;
 use std::collections::HashMap;
-use tokio_postgres::{NoTls, Row, RowStream};
+use tokio_postgres::{Row, RowStream};
 
 mod cli;
 mod dsn;
@@ -24,40 +24,25 @@ async fn next_hash(mut rows: Pin<&mut RowStream>, first: bool) -> Result<(Row, u
     }
 }
 
+
 #[tokio::main] // By default, tokio_postgres uses the tokio crate as its runtime.
 async fn main() -> Result<()> {
-    let args = cli::Params::get_args();
-    // Connect to the database.
-    let source_dsn = dsn::Dsn::from_string(args.source_dsn.as_str())
-        .merge(dsn::Dsn::from_defaults())
-        .as_string();
-    println!("source dsn: {0}", source_dsn);
-    let (source, source_connection) = tokio_postgres::connect(&*source_dsn, NoTls).await?;
-
-    // The source_connection object performs the actual communication with the database,
-    // so spawn it off to run on its own.
-    tokio::spawn(async move {
-        if let Err(e) = source_connection.await {
-            eprintln!("source connection error: {}", e);
-        }
-    });
-
     // We need to pass in params, and we need to define params for async operations
     // Lets define as array of 32 bit integer with 0 elements
     let params: &[i32] = &[];
+    let args = cli::Params::get_args();
+
+    // Connect to the source database.
+    let source_dsn = dsn::Dsn::from_string(args.source_dsn.as_str())
+        .merge(dsn::Dsn::from_defaults());
+    let source = source_dsn.client().await;
     // And run the query on the source connection
     let source_rows = source.query_raw(&args.source_query, params).await?;
 
-    let (dest, dest_connection) = tokio_postgres::connect(&*args.source_dsn, NoTls).await?;
-
-    // The dest_connection object performs the actual communication with the database,
-    // so spawn it off to run on its own.
-    tokio::spawn(async move {
-        if let Err(e) = dest_connection.await {
-            eprintln!("dest connection error: {}", e);
-        }
-    });
-
+    // Connect to the dest database.
+    let dest_dsn = dsn::Dsn::from_string(args.dest_dsn.as_str())
+        .merge(dsn::Dsn::from_defaults());
+    let dest = dest_dsn.client().await;
     // And run the query on the dest connection
     let dest_rows = dest.query_raw(&args.dest_query, params).await?;
 
